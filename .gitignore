@@ -1,3 +1,4 @@
 .venv/
 __pycache__/
 .ipynb_checkpoints/
+backup_data_structured/
