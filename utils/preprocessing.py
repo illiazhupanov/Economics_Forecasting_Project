@@ -1,10 +1,13 @@
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 import pandas as pd
+from statsmodels.tsa.stattools import adfuller
+import matplotlib.pyplot as plt
+
 def generate_data_ffnn(array: np.ndarray, num_lags: int, num_countries: int) \
     -> tuple[np.ndarray, np.ndarray]:
     '''
-    Generate inputs and targets data for FFNN, each sample is flattened 
+    Generates inputs and targets data for FFNN, each sample is flattened 
     
     Args:
         array: Dataset structured in the shape of (countries * timesteps, features). The values must be sorted per country first and per timestep second.\
@@ -35,7 +38,7 @@ def generate_data_ffnn(array: np.ndarray, num_lags: int, num_countries: int) \
 def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     -> tuple[np.ndarray, np.ndarray]:
     '''
-    Generate inputs and targets data for RNN.
+    Generates inputs and targets data for RNN.
 
     Args:
         array: Dataset structured in the shape of (countries * timesteps, features). The values must be sorted per country first and per timestep second.\
@@ -61,3 +64,26 @@ def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     windows = windows[:, :-1, :, :]
     inputs = windows.reshape(num_countries * windows.shape[1], num_lags, num_features)
     return(inputs, targets)
+
+
+def scaler(array: np.ndarray, return_scaling_parameters: bool = True) -> tuple:
+    '''
+    Normalises the input variables
+
+    Args:
+        array: numpy array of variables, of shape (num_of_samples, num_of_variables). The scaling parameters will be returned for the last column
+        return_scaling_parameters: specifies whether to include the scaling parameters for the last column variable in the tuple. Default is True
+
+    Returns:
+        Tuple: tuple with normalised array. If return_scaling_parameters is set to True, then returns (normalised_array, mean, std), where the scaling metrics are for the last column variable
+    '''
+    mean = array.mean(axis = 0)
+    std = array.std(axis = 0)
+    scaled_arr = (array - mean) / std
+    if return_scaling_parameters:
+        output_mean = mean[-1]
+        output_std = std[-1]
+        return(scaled_arr, output_mean, output_std)
+    else:
+        return scaled_arr
+    
