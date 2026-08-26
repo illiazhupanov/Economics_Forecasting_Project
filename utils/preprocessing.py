@@ -86,4 +86,19 @@ def scaler(array: np.ndarray, return_scaling_parameters: bool = True) -> tuple:
         return(scaled_arr, output_mean, output_std)
     else:
         return scaled_arr
+
+def difference(array: np.ndarray, num_countries: int) -> np.ndarray:
+    '''
+        Produces an array of first differences along rows for long-format panel data, meaning each country is differenced independently. NaNs are removed 
     
+        Args:
+            array: numpy array of variables, of shape (num_of_samples, num_of_variables)
+            num_countries: number of countries in the training data
+           
+        Returns:
+            array: long-format panel array of differences
+        '''
+    num_timesteps = array.shape[0] // num_countries
+    reshaped_arr = array.reshape(num_countries, num_timesteps, -1)
+    return_arr = np.diff(reshaped_arr, axis = 1).reshape(num_countries * (num_timesteps - 1), -1)
+    return return_arr
