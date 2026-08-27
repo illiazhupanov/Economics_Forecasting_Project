@@ -10,7 +10,8 @@ def generate_data_ffnn(array: np.ndarray, num_lags: int, num_countries: int) \
     Generates inputs and targets data for FFNN, each sample is flattened 
     
     Args:
-        array: Dataset structured in the shape of (countries * timesteps, features). The values must be sorted per country first and per timestep second.\
+        array: Dataset structured in the shape of (countries * timesteps, features). 
+        The values must be sorted per country first and per timestep second.
         The last feature column should be the targets value
         number_of_lags: Desired number of lags for input data
         num_countries: Number of countries in the training data
@@ -41,7 +42,8 @@ def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     Generates inputs and targets data for RNN.
 
     Args:
-        array: Dataset structured in the shape of (countries * timesteps, features). The values must be sorted per country first and per timestep second.\
+        array: Dataset structured in the shape of (countries * timesteps, features). 
+        The values must be sorted per country first and per timestep second.
         The last feature column should be the targets value
         number_of_lags: Desired number of lags for input data
         num_countries: Number of countries in the training data
@@ -66,20 +68,27 @@ def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     return(inputs, targets)
 
 
-def scaler(array: np.ndarray, return_scaling_parameters: bool = True) -> tuple:
+def scaler(array: np.ndarray, return_scaling_parameters: bool = True, use_mean_std_list: list[float] | None = None) -> tuple:
     '''
     Normalises the input variables
 
     Args:
-        array: numpy array of variables, of shape (num_of_samples, num_of_variables). The scaling parameters will be returned for the last column
-        return_scaling_parameters: specifies whether to include the scaling parameters for the last column variable in the tuple. Default is True
+        array: numpy array of variables, of shape (num_of_samples, num_of_variables). 
+        The scaling parameters will be returned for the last column
+        return_scaling_parameters: specifies whether to include the scaling parameters 
+        for the last column variable in the tuple. Default is True
+        use_mean: optional, list/tuple with pre-calculated mean and standard deviation that is to be used when scaling the array
 
     Returns:
-        Tuple: tuple with normalised array. If return_scaling_parameters is set to True, then returns (normalised_array, mean, std), where the scaling metrics are for the last column variable
+        Tuple: tuple with normalised array. If return_scaling_parameters is set to True, 
+        then returns (normalised_array, mean, std), where the scaling metrics are for the last column variable
     '''
     mean = array.mean(axis = 0)
     std = array.std(axis = 0)
-    scaled_arr = (array - mean) / std
+    if use_mean_std_list == None:
+        scaled_arr = (array - mean) / std
+    else:
+        scaled_arr = (array - use_mean_std_list[0]) / use_mean_std_list[1]
     if return_scaling_parameters:
         output_mean = mean[-1]
         output_std = std[-1]
@@ -87,18 +96,24 @@ def scaler(array: np.ndarray, return_scaling_parameters: bool = True) -> tuple:
     else:
         return scaled_arr
 
-def difference(array: np.ndarray, num_countries: int) -> np.ndarray:
+def differencer(array: np.ndarray, num_countries: int, column_slices_to_difference: list[int]) -> np.ndarray:
     '''
         Produces an array of first differences along rows for long-format panel data, meaning each country is differenced independently. NaNs are removed 
     
         Args:
             array: numpy array of variables, of shape (num_of_samples, num_of_variables)
             num_countries: number of countries in the training data
+            column slices to difference: list containing indexes of columns of variables that need to be differenced in a given array
            
         Returns:
             array: long-format panel array of differences
         '''
     num_timesteps = array.shape[0] // num_countries
-    reshaped_arr = array.reshape(num_countries, num_timesteps, -1)
-    return_arr = np.diff(reshaped_arr, axis = 1).reshape(num_countries * (num_timesteps - 1), -1)
-    return return_arr
+    num_features = array.shape[1]
+    # reshaping into (num_countries, num_timesteps, num_features), where each matrix is one country
+    reshaped_arr = array.reshape(num_countries, num_timesteps, -1).copy()
+    # differencing only the given variables' columns while leaving the first element in this columns intact so that the shapes match
+    reshaped_arr[:, 1:, column_slices_to_difference] = np.diff(reshaped_arr[:, :, column_slices_to_difference], axis = 1)
+    # dropping the first time step in each country, as it was not differenced and reshaping
+    differenced_arr = reshaped_arr[:, 1:, :].reshape(num_countries * (num_timesteps - 1), num_features)
+    return differenced_arr
