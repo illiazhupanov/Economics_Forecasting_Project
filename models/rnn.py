@@ -7,14 +7,14 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path.cwd().parent))
 from keras import ops
-from utils.preprocessing import scaler, differencer, generate_data_ffnn
+from utils.preprocessing import scaler, generate_data_rnn
 from utils.misc import generate_timesteps_list
 import matplotlib.pyplot as plt
 import itertools
 import time
 
-
-class ffnn:
+########################## not started
+class rnn:
     def __init__(self, df: pd.DataFrame, column_names_to_difference: list[str], train_years: list[int], 
                  val_years: list[int], test_years: list[int], num_countries: int = 22, num_lags: int = 3):
         '''

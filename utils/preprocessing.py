@@ -62,7 +62,8 @@ def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     # extracting the targets into a vector and flattening
     targets = windows[:, 1:, -1, -1] 
     targets = targets.reshape(-1,)
-    # dropping the last window of observations from each country (since there's no target for it) and flattening only the countries
+    # dropping the last window of observations from each country (since there's no target for it) 
+    # and flattening only the countries
     windows = windows[:, :-1, :, :]
     inputs = windows.reshape(num_countries * windows.shape[1], num_lags, num_features)
     return(inputs, targets)
