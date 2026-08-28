@@ -73,15 +73,14 @@ def scaler(array: np.ndarray, return_scaling_parameters: bool = True, use_mean_s
     Normalises the input variables
 
     Args:
-        array: numpy array of variables, of shape (num_of_samples, num_of_variables). 
-        The scaling parameters will be returned for the last column
+        array: numpy array of variables, of shape (num_of_samples, num_of_variables)
         return_scaling_parameters: specifies whether to include the scaling parameters 
         for the last column variable in the tuple. Default is True
-        use_mean: optional, list/tuple with pre-calculated mean and standard deviation that is to be used when scaling the array
+        use_mean: optional, list with pre-calculated mean and standard deviation that is to be used when scaling the array
 
     Returns:
         Tuple: tuple with normalised array. If return_scaling_parameters is set to True, 
-        then returns (normalised_array, mean, std), where the scaling metrics are for the last column variable
+        then returns (normalised_array, mean, std), where the scaling metrics are arrays for each of the columns
     '''
     mean = array.mean(axis = 0)
     std = array.std(axis = 0)
@@ -90,9 +89,7 @@ def scaler(array: np.ndarray, return_scaling_parameters: bool = True, use_mean_s
     else:
         scaled_arr = (array - use_mean_std_list[0]) / use_mean_std_list[1]
     if return_scaling_parameters:
-        output_mean = mean[-1]
-        output_std = std[-1]
-        return(scaled_arr, output_mean, output_std)
+        return(scaled_arr, mean, std)
     else:
         return scaled_arr
 
