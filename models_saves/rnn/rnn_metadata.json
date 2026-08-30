@@ -1,0 +1,8 @@
+{
+    "gru_units_1": 32,
+    "gru_units_2": 16,
+    "dropout_rate": 0.2,
+    "best_batch_size": 64,
+    "best_epochs": 8,
+    "best_num_lags": 16
+}

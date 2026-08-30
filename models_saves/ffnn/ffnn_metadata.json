@@ -1,0 +1,8 @@
+{
+    "hidden_first_neurons": 32,
+    "hidden_second_neurons": 8,
+    "dropout_rate": 0.3,
+    "best_batch_size": 64,
+    "best_epochs": 8,
+    "best_num_lags": 16
+}

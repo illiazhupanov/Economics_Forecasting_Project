@@ -6,17 +6,16 @@ import keras
 import sys
 from pathlib import Path
 sys.path.append(str(Path.cwd().parent))
-from keras import ops
 from utils.preprocessing import scaler, differencer, generate_data_ffnn
 from utils.misc import generate_timesteps_list
 import matplotlib.pyplot as plt
 import itertools
 import time
-
+import json
 
 class ffnn:
     def __init__(self, df: pd.DataFrame, column_names_to_difference: list[str], train_years: list[int], 
-                 val_years: list[int], test_years: list[int], num_countries: int = 22, num_lags: int = 3):
+                 val_years: list[int], test_years: list[int], num_countries: int = 22):
         '''
         Initialises the instance of a class with the data that model will be trained on
 
@@ -32,15 +31,11 @@ class ffnn:
             for producing forecast errors during rolling-origin forecasting
             column_names_to_difference: list of column names of variables that need to be differenced in the original dataframe
             num_countries: number of countries in the training data
-            num_lags: number of lagged time steps that will be used to forecast the next one
         '''
+        df = df.copy()
         self.original_df = df.copy()
         self.list_of_countries = list(df['Reference area'].unique())
         self.num_countries =  num_countries
-        self.num_lags = num_lags
-        self.model = None
-        self.epochs = None
-        self.batch_size = None
 
         # saving the undifferenced array
         ro_train_timesteps_list = [train_years[0], val_years[1]]
@@ -62,6 +57,7 @@ class ffnn:
         train_df = df.loc[df['TIME_PERIOD'].isin(train_timesteps_list), :]
         # dropping the country name and timestep indexes
         self.train_array = train_df.to_numpy()[:, 2:].astype(np.float32)
+        self.num_features = self.train_array.shape[1]
 
         val_timesteps_list = generate_timesteps_list(*val_years)
         val_df = df.loc[df['TIME_PERIOD'].isin(val_timesteps_list), :]
@@ -71,8 +67,8 @@ class ffnn:
         self.test_array = test_df.to_numpy()[:, 2:].astype(np.float32)
 
 
-    def init_model(self, hidden_first_neurons, hidden_second_neurons, dropout_rate, 
-                   optimiser: str = 'adam', loss: str = 'mse', ):
+    def init_model(self, hidden_first_neurons, hidden_second_neurons, dropout_rate, num_lags,
+                   optimiser: str = 'adam', loss: str = 'mse'):
         '''
         Initialises the instance of model
         
@@ -80,14 +76,14 @@ class ffnn:
             hidden_first_neurons: the number of neurons to be used at first hidden layer
             hidden_second_neurons: the number of neurons to be used at second hidden layer
             dropout_rate: the dropout rate to be used at dropout layer
+            num_lags: how many past lags should be used for inputs
             optimiser: optimiser used in training. Default is adam
             loss: loss function used in training. Default is MSE
         
         Returns:
             A compiled instance of keras.Model with given parameters
         '''
-        num_features = self.train_array.shape[1]
-        inputs = keras.layers.Input(shape = (num_features * self.num_lags,))
+        inputs = keras.layers.Input(shape = (self.num_features * num_lags,))
         features = keras.layers.Dense(hidden_first_neurons, activation = 'relu')(inputs)
         features = keras.layers.Dropout(dropout_rate)(features)
         features = keras.layers.Dense(hidden_second_neurons, activation = 'relu')(features)
@@ -99,11 +95,13 @@ class ffnn:
 
     def tune_model(self, epochs: int = 100):
         '''
-        Tunes the model across a set of parameters from grid search. The best model config is saved 
+        Tunes the model across a set of parameters from grid search. The best model config is saved, along with 
+        number of lags, batch size, and the number of epochs
 
         Args:
-            epochs: the maximum number of epochs each model configuration can get fitted for. Default is 200
+            epochs: the maximum number of epochs each model configuration can get fitted for. Default is 100
         '''
+        print('tuning the model on vaidation data: ')
         train_arr = self.train_array.copy()
         val_arr = self.val_array.copy()
         # the mean and std returned are for the last column, which is unemployment in my case
@@ -111,22 +109,29 @@ class ffnn:
         val_arr = scaler(val_arr, return_scaling_parameters = False, 
                         use_mean_std_list = (mean_variable, std_variable))
                         
-        train_inputs, train_targets = generate_data_ffnn(train_arr, self.num_lags, self.num_countries)
-        val_inputs, val_targets = generate_data_ffnn(val_arr, self.num_lags, self.num_countries)
 
         #initialising the possible hyperparameters
-        hidden_first = [16, 32]
-        hidden_second = [8, 16]
-        dropout_rate = [0.1, 0.2, 0.3]
-        batch_sizes = [16, 32, 64]
+        hidden_first_list = [16, 32]
+        hidden_second_list = [8, 16]
+        dropout_rate_list = [0.1, 0.2, 0.3]
+        batch_sizes_list = [16, 64]
+        num_lags_list = [2, 8, 12, 16]
 
         
         best_val_loss = float('inf')
 
-        for h1, h2, dropout, batch_size in itertools.product(hidden_first, hidden_second, dropout_rate, batch_sizes):
+        for hidden_1, hidden_2, dropout_rate, batch_size, num_lags \
+            in itertools.product(hidden_first_list, hidden_second_list, dropout_rate_list, 
+                                 batch_sizes_list, num_lags_list):
 
-            model = self.init_model(h1, h2, dropout)
-            early_stop = keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 10, restore_best_weights = True)
+
+            # re-generating data at every iteration because the number of lags changes
+            train_inputs, train_targets = generate_data_ffnn(train_arr, num_lags, self.num_countries)
+            val_inputs, val_targets = generate_data_ffnn(val_arr, num_lags, self.num_countries)
+
+            model = self.init_model(hidden_1, hidden_2, dropout_rate, num_lags)
+            early_stop = keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 10, 
+                                                       min_delta=0.005, restore_best_weights = True)
             history = model.fit(train_inputs, train_targets, batch_size = batch_size, epochs = epochs, 
                        validation_data = (val_inputs, val_targets), callbacks = [early_stop], verbose = 0)
             val_loss = history.history['val_loss']
@@ -136,18 +141,30 @@ class ffnn:
             # saving the best config and its parameters in case it reached the val loss lower than the previous best
             if config_best_val_loss < best_val_loss:
                 best_val_loss = config_best_val_loss
-                best_config = (h1, h2, dropout)
+                best_config = (hidden_1, hidden_2, dropout_rate)
                 best_config_history = history.history
-                self.batch_size = batch_size
-                self.epochs = epoch_of_best_val_loss
-                self.model = model
+                best_batch_size = batch_size
+                best_epochs = epoch_of_best_val_loss
+                best_num_lags = num_lags
 
+        # saving the model and parameters
+        metadata = {
+                    'hidden_first_neurons': int(best_config[0]),
+                    'hidden_second_neurons': int(best_config[1]),
+                    'dropout_rate': float(best_config[2]),
+                    'best_batch_size': int(best_batch_size),
+                    'best_epochs': int(best_epochs),
+                    'best_num_lags': int(best_num_lags)
+        }
+        with open("..\\models_saves\\ffnn\\ffnn_metadata.json", "w") as f:
+            json.dump(metadata, f, indent=4)
 
         print(f'best config is:\n1st hidden layer neurons: {best_config[0]}')
         print(f'2nd hidden layer neurons {best_config[1]}')
         print(f'dropout rate: {best_config[2]}')
-        print(f'batch size is: {self.batch_size}')
-        print(f'minimum validation loss reached: {best_val_loss}\nreached after {self.epochs} epochs')
+        print(f'batch size is: {best_batch_size}')
+        print(f'minimum validation loss reached: {best_val_loss}\nreached after {best_epochs} epochs')
+        print(f'using {best_num_lags} past lags')
         plt.plot(best_config_history['loss'], label = 'training loss ')
         plt.plot(best_config_history['val_loss'], label = 'validation loss')
         plt.xlabel('epoch')
@@ -155,52 +172,75 @@ class ffnn:
         plt.legend()
         plt.show()
 
-
-    
     def unnormalise_value(self, input_value, mean, std):
         return input_value * std + mean
 
+    def load_metadata(self): 
+        with open('..\\models_saves\\ffnn\\ffnn_metadata.json', 'r') as f:
+            metadata = json.load(f)
+        return metadata
+
+    def construct_model_from_metadata(self, metadata):
+        hidden_1 = metadata['hidden_first_neurons']
+        hidden_2 = metadata['hidden_second_neurons']
+        dropout_rate = metadata['dropout_rate']
+        num_lags = metadata['best_num_lags']
+        model = self.init_model(hidden_1, hidden_2, dropout_rate, num_lags)
+        epochs = metadata['best_epochs']
+        batch_size = metadata['best_batch_size']
+        return (model, num_lags, epochs, batch_size)
+
 
     def rolling_origin_forecast(self):
-        
-        if self.model == None:
-            print('Fitting the model on validation data...')
+        '''
+        Runs a rolling-origin forecast on the test data that was passed in at class instantiation.
+        The training data is comprised of training data for tuning and validation data for tuning
+        The best model from tuning stage is loaded, if no save exists then tune_model() is called first
+        '''
+        # loading the best model and its parameters, tuning a new model if no save exists
+        try:
+            metadata = self.load_metadata()
+        except:
             self.tune_model()
+            metadata = self.load_metadata()
+
         print('starting rolling-origin forecast...')
-        num_features = self.train_array.shape[1]
         #combining the train and validation arrays
-        temp_train_arr = self.train_array.reshape(self.num_countries, -1, num_features)
-        temp_val_arr = self.val_array.reshape(self.num_countries, -1, num_features)
-        curr_train_arr = np.concat((temp_train_arr, temp_val_arr), axis = 1).reshape(-1, num_features)
+        temp_train_arr = self.train_array.reshape(self.num_countries, -1, self.num_features)
+        temp_val_arr = self.val_array.reshape(self.num_countries, -1, self.num_features)
+        curr_train_arr = np.concat((temp_train_arr, temp_val_arr), axis = 1).reshape(-1, self.num_features)
         curr_test_arr = self.test_array
         # creating a dictionary for results
         forecasts_dict = {country: [] for country in self.list_of_countries}
+
         for i in range(self.test_array.shape[0] // self.num_countries):
+            # re-initialsing the model
+            model, num_lags, epochs, batch_size = self.construct_model_from_metadata(metadata)
+
             # normalising the train data 
             normalised_train_arr, mean_train, std_train = scaler(curr_train_arr)
-            curr_train_inputs, curr_train_targets = generate_data_ffnn(normalised_train_arr, num_lags = self.num_lags, 
+            curr_train_inputs, curr_train_targets = generate_data_ffnn(normalised_train_arr, num_lags = num_lags, 
                                                                        num_countries = self.num_countries)
             
-            # training the network on the normalised data
-            self.model.fit(curr_train_inputs, curr_train_targets, batch_size = self.batch_size, epochs = self.epochs,
+            # training on the normalised data
+            model.fit(curr_train_inputs, curr_train_targets, batch_size = batch_size, epochs = epochs,
                            verbose = 0)
 
-                    
             for j, country_name in enumerate(self.list_of_countries):
                 # getting the last timestep data for current country
-                temp_train_arr =  normalised_train_arr.reshape(self.num_countries, -1, num_features)
-                forecast_input = temp_train_arr[j, -self.num_lags:, :].reshape(1, num_features * self.num_lags)
+                temp_train_arr =  normalised_train_arr.reshape(self.num_countries, -1, self.num_features)
+                forecast_input = temp_train_arr[j, -num_lags:, :].reshape(1, self.num_features * num_lags)
                 # running inference
-                model_forecast_value = self.model.predict(forecast_input, verbose = 0)[0,0]
+                model_forecast_value = model.predict(forecast_input, verbose = 0)[0,0]
                 # unnormalising the value obtained from the model
                 unnormalised_forecast_value = self.unnormalise_value(model_forecast_value, mean_train[-1], std_train[-1])
                 # getting the original, undifferenced value of the forecast variable at the previous time step 
                 # relative to the one being forecast
                 if i == 0:
-                    temp_original_train_arr = self.original_ro_train_array.reshape(self.num_countries, -1, num_features)
+                    temp_original_train_arr = self.original_ro_train_array.reshape(self.num_countries, -1, self.num_features)
                     previous_value = temp_original_train_arr[j, -1, -1]
                 else:
-                    temp_original_test_arr = self.original_test_array.reshape(self.num_countries, -1, num_features)
+                    temp_original_test_arr = self.original_test_array.reshape(self.num_countries, -1, self.num_features)
                     previous_value = temp_original_test_arr[j, i - 1, -1]
                 # undifferencing 
                 reconstructed_forecast_value = unnormalised_forecast_value + previous_value
@@ -208,12 +248,13 @@ class ffnn:
                 forecasts_dict[country_name].append(reconstructed_forecast_value)
             # obtaining new training and test arrays by transferring the values already used for obtaining
             # forecast errors from test array to train array
-            curr_test_arr = curr_test_arr.reshape(self.num_countries, -1, num_features)
-            used_values = curr_test_arr[:, 0, :].reshape(self.num_countries, 1, num_features)
-            curr_train_arr = curr_train_arr.reshape(self.num_countries, -1, num_features)
-            curr_train_arr = np.concat((curr_train_arr, used_values), axis = 1).reshape(-1, num_features)
-            curr_test_arr = curr_test_arr[:, 1:, :].reshape(-1, num_features)
+            curr_test_arr = curr_test_arr.reshape(self.num_countries, -1, self.num_features)
+            used_values = curr_test_arr[:, 0, :].reshape(self.num_countries, 1, self.num_features)
+            curr_train_arr = curr_train_arr.reshape(self.num_countries, -1, self.num_features)
+            curr_train_arr = np.concat((curr_train_arr, used_values), axis = 1).reshape(-1, self.num_features)
+            curr_test_arr = curr_test_arr[:, 1:, :].reshape(-1, self.num_features)
         result_df = self.construct_result_df(forecasts_dict)
+        print('end of rolling-origin forecast...')
         return result_df
 
 

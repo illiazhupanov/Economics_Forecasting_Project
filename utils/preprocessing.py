@@ -24,9 +24,9 @@ def generate_data_ffnn(array: np.ndarray, num_lags: int, num_countries: int) \
     num_features = array.shape[1]
     # reshaping the array to get a matrix per country
     array = array.reshape(num_countries, num_timesteps, num_features) 
-    # generating the sliding windows and squeezing the dimensions of size 1
-    windows = sliding_window_view(x = array, window_shape = (1, num_lags, num_features))
-    windows = windows.squeeze()
+    # generating the sliding windows and reshaping to (countries, windows, timesteps, features)
+    windows = sliding_window_view(x = array, window_shape = num_lags, axis = 1)
+    windows = windows.transpose(0, 1, 3, 2)
     # extracting the targets into a vector and flattening
     targets = windows[:, 1:, -1, -1] 
     targets = targets.reshape(-1,)
@@ -56,9 +56,9 @@ def generate_data_rnn(array: np.ndarray, num_lags: int, num_countries: int) \
     num_features = array.shape[1]
     # reshaping the array to get a matrix per country
     array = array.reshape(num_countries, num_timesteps, num_features) 
-    # generating the sliding windows
-    windows = sliding_window_view(x = array, window_shape = (1, num_lags, num_features))
-    windows = windows.squeeze()
+    # generating the sliding windows and reordering to achieve (countries, windows, timesteps, features)
+    windows = sliding_window_view(x = array, window_shape = num_lags, axis = 1)
+    windows = windows.transpose(0, 1, 3, 2)
     # extracting the targets into a vector and flattening
     targets = windows[:, 1:, -1, -1] 
     targets = targets.reshape(-1,)
