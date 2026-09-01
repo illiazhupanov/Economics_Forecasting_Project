@@ -196,6 +196,9 @@ class ffnn:
         Runs a rolling-origin forecast on the test data that was passed in at class instantiation.
         The training data is comprised of training data for tuning and validation data for tuning
         The best model from tuning stage is loaded, if no save exists then tune_model() is called first
+
+        Returns: 
+            pandas dataframe with both the original values and forecasts over the test period
         '''
         # loading the best model and its parameters, tuning a new model if no save exists
         try:
