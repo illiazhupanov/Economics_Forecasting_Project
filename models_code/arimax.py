@@ -26,6 +26,13 @@ class arimax:
         Args:
             df: a pandas dataframe with long-format panel data, where first column should be the reference area, 
             the second column time steps, and the last column the forecast variable
+            column_names_to_difference: list of string column names, values in which should be differenced
+            train_years: list with (first_year, last_year) inclusively, data for that time period will be used 
+            for initial training as well as rolling-origin training
+            val_years: list with (first_year, last_year) inclusively, data for that time period will be used 
+            for initial tuning validation as well as rolling-origin training
+            test_years: list with (first_year, last_year) inclusively, data for that time period will be used 
+            for producing forecast errors during rolling-origin forecasting
         '''
         df = df.copy()
         self.original_df = df.copy()

@@ -23,13 +23,13 @@ class ffnn:
             df: long-format panel dataframe with time series of variables 
             where columns should be ordered as follows: country name, timestep in the format of YYYY-Q№, variables,
             and the last column is the variable that is being forecast
+            column_names_to_difference: list of column names of variables that need to be differenced in the original dataframe
             train_years: list with (first_year, last_year) inclusively, data for that time period will be used 
             for initial training as well as rolling-origin training
             val_years: list with (first_year, last_year) inclusively, data for that time period will be used 
             for initial tuning validation as well as rolling-origin training
             test_years: list with (first_year, last_year) inclusively, data for that time period will be used 
             for producing forecast errors during rolling-origin forecasting
-            column_names_to_difference: list of column names of variables that need to be differenced in the original dataframe
             num_countries: number of countries in the training data
         '''
         df = df.copy()
@@ -115,7 +115,7 @@ class ffnn:
         hidden_second_list = [8, 16]
         dropout_rate_list = [0.1, 0.2, 0.3]
         batch_sizes_list = [16, 64]
-        num_lags_list = [2, 8, 12, 16]
+        num_lags_list = [2, 8, 12, 16, 18]
 
         
         best_val_loss = float('inf')
