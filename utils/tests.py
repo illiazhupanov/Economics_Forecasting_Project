@@ -98,25 +98,25 @@ def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
         mean_error_std = np.std(errors_diff) / np.sqrt(num_errors)
         # standardising the value
         standardised_mean_error_diff = mean_error_diff / mean_error_std
-        p_value = round(2 * (1 - stats.norm.cdf(abs(standardised_mean_error_diff))), 4)
+        p_value = round(2 * (1 - stats.norm.cdf(abs(standardised_mean_error_diff))), 3)
         if standardised_mean_error_diff > 1.96 or standardised_mean_error_diff < -1.96:
             if mean_error_diff < 0:
                 print(f'{name_model_1} is significantly better than {name_model_2} with p-value of {p_value}')
                 with open(filepath, 'a') as f:
-                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, Yes, {name_model_1}' + '\n')
+                    f.write(f'{name_model_1}, {name_model_2}, {round(standardised_mean_error_diff, 3)}, {p_value}, Yes, {name_model_1}' + '\n')
             else:
                 print(f'{name_model_2} is significantly better than {name_model_1} with p-value of {p_value}')
                 with open(filepath, 'a') as f:
-                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, Yes, {name_model_2}' + '\n')
+                    f.write(f'{name_model_1}, {name_model_2}, {round(standardised_mean_error_diff, 3)}, {p_value}, Yes, {name_model_2}' + '\n')
         else:
             if mean_error_diff < 0:
                 print(f'{name_model_1} is not significantly better than {name_model_2} with p-value of {p_value}')
                 with open(filepath, 'a') as f:
-                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, No, {name_model_1}' + '\n')
+                    f.write(f'{name_model_1}, {name_model_2}, {round(standardised_mean_error_diff, 3)}, {p_value}, No, {name_model_1}' + '\n')
             else:
                 print(f'{name_model_2} is not significantly better than {name_model_1} with p-value of {p_value}')
                 with open(filepath, 'a') as f:
-                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, No, {name_model_2}' + '\n')           
+                    f.write(f'{name_model_1}, {name_model_2}, {round(standardised_mean_error_diff, 3)}, {p_value}, No, {name_model_2}' + '\n')           
 
 def MAE(df):
     '''

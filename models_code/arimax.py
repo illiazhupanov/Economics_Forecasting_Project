@@ -156,7 +156,7 @@ class arimax:
 
         print('starting rolling-origin forecast...')
         forecasts_dict = {country: [] for country in self.list_of_countries}
-
+        exog_regressors_coeffs = {country: {'CPI inflation': [], 'RGDP growth': []} for country in self.list_of_countries}
         for country in self.list_of_countries:
             # resetting the parameters at each country
             prev_parameters = None
@@ -191,8 +191,17 @@ class arimax:
                 forecast = model.forecast(steps = 1, exog = exog_future).iloc[0]
                 # saving the forecast
                 forecasts_dict[country].append(forecast)
+                # adding the current coefficients of exog regressors to later estimate Phillips and Okun compliance
+                cpi_coef = model.params['CPI inflation']
+                cpi_pval = model.pvalues['CPI inflation']
+                exog_regressors_coeffs[country]['CPI inflation'].append(cpi_coef)
+                exog_regressors_coeffs[country]['CPI inflation'].append(cpi_pval)
+                rgdp_coef = model.params['RGDP growth']
+                rgdp_pval = model.pvalues['RGDP growth']
+                exog_regressors_coeffs[country]['RGDP growth'].append(rgdp_coef)
+                exog_regressors_coeffs[country]['RGDP growth'].append(rgdp_pval)
         result_df = self.construct_result_df(forecasts_dict)
-        return result_df
+        return result_df, exog_regressors_coeffs
 
     def construct_result_df(self, forecasts_dict):
         # getting only the columns of reference areas, timesteps, and the true values of forecast variable  
