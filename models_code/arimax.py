@@ -102,6 +102,7 @@ class arimax:
         Best models' orders per country are saved along with their MSE
         '''
         # the best configs and their MSEs will be saved here
+        print('tuning the model on validation data...')
         best_orders_dict = {country : [] for country in self.list_of_countries}
 
         for country in self.list_of_countries:
@@ -153,6 +154,7 @@ class arimax:
             with open('..\\models_saves\\arimax\\arimax_metadata.json', 'r') as f:
                 metadata = json.load(f)
 
+        print('starting rolling-origin forecast...')
         forecasts_dict = {country: [] for country in self.list_of_countries}
 
         for country in self.list_of_countries:

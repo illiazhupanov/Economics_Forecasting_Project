@@ -44,7 +44,7 @@ def check_stationarity(df, list_of_countries):
             print(f'{country} is non-stationary with p-value_adfuller of {p_value_adfuller} and p-value_kpss {p_value_kpss}')
 
 
-def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df):
+def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
     '''
     Runs a Diebold-Mariano test, while averaging the mean absolute errors across countries for each timestep. 
     Significance level is 5%
@@ -58,6 +58,7 @@ def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df):
         the second column time steps, the second-to-last the true values, and the last the forecasted values
         arimax_df: a pandas dataframe with long-format panel data, where first column should be the reference area, 
         the second column time steps, the second-to-last the true values, and the last the forecasted values
+        filepath: the path (including the file name) to which save the CSV
     '''
     # getting only the number of forecasts that corresponds to the smallest number of observations across dataframes
     # to ensure consistency, as for some models the first one or two forecasts are missing
@@ -84,6 +85,8 @@ def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df):
     mean_errors_dict = {'naive': naive_abs_errors_mean, 'ffnn': ffnn_abs_errors_mean, 
                             'rnn': rnn_abs_errors_mean, 'arimax': arimax_abs_errors_mean}
 
+    with open(filepath, 'w') as f:
+        f.write(f'Model A, Model B, D-M statistic, p-value, Significance at 5%, Preferred model' + '\n')
     for (name_model_1, model_1_errors), (name_model_2, model_2_errors) \
         in itertools.combinations(mean_errors_dict.items(), 2):
 
@@ -99,11 +102,21 @@ def diebold_mariano(naive_df, ffnn_df, rnn_df, arimax_df):
         if standardised_mean_error_diff > 1.96 or standardised_mean_error_diff < -1.96:
             if mean_error_diff < 0:
                 print(f'{name_model_1} is significantly better than {name_model_2} with p-value of {p_value}')
+                with open(filepath, 'a') as f:
+                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, Yes, {name_model_1}' + '\n')
             else:
                 print(f'{name_model_2} is significantly better than {name_model_1} with p-value of {p_value}')
+                with open(filepath, 'a') as f:
+                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, Yes, {name_model_2}' + '\n')
         else:
-            print(f'neither model was significantly better; p-value is {p_value}')
-
+            if mean_error_diff < 0:
+                print(f'{name_model_1} is not significantly better than {name_model_2} with p-value of {p_value}')
+                with open(filepath, 'a') as f:
+                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, No, {name_model_1}' + '\n')
+            else:
+                print(f'{name_model_2} is not significantly better than {name_model_1} with p-value of {p_value}')
+                with open(filepath, 'a') as f:
+                    f.write(f'{name_model_1}, {name_model_2}, {standardised_mean_error_diff}, {p_value}, No, {name_model_2}' + '\n')           
 
 def MAE(df):
     '''
@@ -116,7 +129,7 @@ def MAE(df):
     Returns:
         mae: a float scalar 
     '''
-    mae = float((df.iloc[:, -2] - df.iloc[:, -1]).abs().mean())
+    mae = round(float((df.iloc[:, -2] - df.iloc[:, -1]).abs().mean()), 4)
     return mae
 
 def RMSE(df):
@@ -130,6 +143,14 @@ def RMSE(df):
     Returns:
         rmse: a float scalar 
         '''
-    rmse = np.sqrt(np.mean((df.iloc[:, -2] - df.iloc[:, -1]) ** 2))
-    return float(rmse)
+    rmse = round(float(np.sqrt(np.mean((df.iloc[:, -2] - df.iloc[:, -1]) ** 2))), 4)
+    return rmse
 
+def produce_errors_csv(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
+    with open(filepath, 'w') as f:
+        f.write(f'Model, MAE, RMSE' + '\n') 
+    with open(filepath, 'a') as f:
+        f.write(f'Naive, {MAE(naive_df)}, {RMSE(naive_df)}' + '\n')
+        f.write(f'FFNN, {MAE(ffnn_df)}, {RMSE(ffnn_df)}' + '\n')
+        f.write(f'RNN, {MAE(rnn_df)}, {RMSE(rnn_df)}' + '\n')
+        f.write(f'ARIMAX, {MAE(arimax_df)}, {RMSE(arimax_df)}' + '\n')

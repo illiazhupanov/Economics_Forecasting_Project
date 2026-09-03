@@ -1,0 +1,7 @@
+Model A, Model B, D-M statistic, p-value, Significance at 5%, Preferred model
+naive, ffnn, 1.3093547607649458, 0.1904, No, ffnn
+naive, rnn, 1.9763247834169706, 0.0481, Yes, rnn
+naive, arimax, 1.4430119439164775, 0.149, No, arimax
+ffnn, rnn, 1.140954958660423, 0.2539, No, rnn
+ffnn, arimax, 0.5355568866797387, 0.5923, No, arimax
+rnn, arimax, -0.8263501438615052, 0.4086, No, rnn

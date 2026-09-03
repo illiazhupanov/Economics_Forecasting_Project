@@ -15,7 +15,7 @@ import json
 
 class rnn:
     def __init__(self, df: pd.DataFrame, column_names_to_difference: list[str], train_years: list[int], 
-                 val_years: list[int], test_years: list[int], num_countries: int = 22):
+                 val_years: list[int], test_years: list[int]):
         '''
         Initialises the instance of a class with the data that model will be trained on
 
@@ -30,12 +30,11 @@ class rnn:
             test_years: list with (first_year, last_year) inclusively, data for that time period will be used 
             for producing forecast errors during rolling-origin forecasting
             column_names_to_difference: list of column names of variables that need to be differenced in the original dataframe
-            num_countries: number of countries in the training data
         '''
         df = df.copy()
         self.original_df = df.copy()
         self.list_of_countries = list(df['Reference area'].unique())
-        self.num_countries =  num_countries
+        self.num_countries =  len(self.list_of_countries)
 
         # saving the undifferenced array
         ro_train_timesteps_list = [train_years[0], val_years[1]]
