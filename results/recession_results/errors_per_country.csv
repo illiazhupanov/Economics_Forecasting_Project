@@ -1,0 +1,85 @@
+Model, Country, MAE, RMSE
+Naive, Australia, 0.3712, 0.5703
+Naive, Austria, 0.5021, 0.7483
+Naive, Belgium, 0.3583, 0.4604
+Naive, Canada, 1.0625, 2.0119
+Naive, Denmark, 0.3792, 0.5302
+Naive, Finland, 0.3896, 0.5139
+Naive, France, 0.3229, 0.5034
+Naive, Germany, 0.1271, 0.1648
+Naive, Ireland, 0.5167, 0.7471
+Naive, Italy, 0.3917, 0.5459
+Naive, Korea, 0.1729, 0.2457
+Naive, Luxembourg, 0.3896, 0.5245
+Naive, Mexico, 0.2371, 0.3915
+Naive, Netherlands, 0.3042, 0.3621
+Naive, New Zealand, 0.2563, 0.3865
+Naive, Norway, 0.375, 0.4634
+Naive, Portugal, 0.4354, 0.5896
+Naive, Spain, 0.4792, 0.6606
+Naive, Sweden, 0.4063, 0.5038
+Naive, United Kingdom, 0.25, 0.326
+Naive, United States, 1.2, 2.5979
+FFNN, Australia, 0.5591, 1.131
+FFNN, Austria, 0.772, 1.586
+FFNN, Belgium, 0.33, 0.4141
+FFNN, Canada, 1.9201, 3.9857
+FFNN, Denmark, 0.4481, 0.5773
+FFNN, Finland, 0.4634, 0.6169
+FFNN, France, 0.3108, 0.456
+FFNN, Germany, 0.2526, 0.3365
+FFNN, Ireland, 0.4874, 0.6226
+FFNN, Italy, 0.3683, 0.4906
+FFNN, Korea, 0.2558, 0.3672
+FFNN, Luxembourg, 0.5234, 1.0439
+FFNN, Mexico, 0.5705, 1.1128
+FFNN, Netherlands, 0.3782, 0.417
+FFNN, New Zealand, 0.2039, 0.2375
+FFNN, Norway, 0.3498, 0.4209
+FFNN, Portugal, 0.3727, 0.4598
+FFNN, Spain, 0.5622, 0.8289
+FFNN, Sweden, 0.5175, 0.5968
+FFNN, United Kingdom, 0.3975, 0.4971
+FFNN, United States, 2.3094, 4.8638
+RNN, Australia, 0.2984, 0.4961
+RNN, Austria, 0.5486, 0.8008
+RNN, Belgium, 0.3368, 0.4263
+RNN, Canada, 0.9791, 2.0102
+RNN, Denmark, 0.3756, 0.494
+RNN, Finland, 0.3709, 0.501
+RNN, France, 0.2937, 0.4244
+RNN, Germany, 0.1602, 0.2022
+RNN, Ireland, 0.5034, 0.6804
+RNN, Italy, 0.3738, 0.4591
+RNN, Korea, 0.1947, 0.2463
+RNN, Luxembourg, 0.3554, 0.5435
+RNN, Mexico, 0.2565, 0.4053
+RNN, Netherlands, 0.2606, 0.3277
+RNN, New Zealand, 0.1871, 0.2573
+RNN, Norway, 0.3242, 0.4007
+RNN, Portugal, 0.3876, 0.5
+RNN, Spain, 0.4, 0.5601
+RNN, Sweden, 0.3574, 0.4518
+RNN, United Kingdom, 0.189, 0.2228
+RNN, United States, 1.1403, 2.6182
+ARIMAX, Australia, 0.3956, 0.5874
+ARIMAX, Austria, 0.5187, 0.7668
+ARIMAX, Belgium, 0.4132, 0.5783
+ARIMAX, Canada, 1.5059, 2.8861
+ARIMAX, Denmark, 0.4056, 0.5629
+ARIMAX, Finland, 0.4015, 0.5316
+ARIMAX, France, 0.4398, 0.7404
+ARIMAX, Germany, 0.0992, 0.127
+ARIMAX, Ireland, 0.601, 0.7666
+ARIMAX, Italy, 0.5418, 0.8384
+ARIMAX, Korea, 0.2147, 0.2602
+ARIMAX, Luxembourg, 0.3783, 0.5821
+ARIMAX, Mexico, 0.3127, 0.4679
+ARIMAX, Netherlands, 0.3586, 0.4449
+ARIMAX, New Zealand, 0.3435, 0.5472
+ARIMAX, Norway, 0.3577, 0.4506
+ARIMAX, Portugal, 0.5522, 0.7246
+ARIMAX, Spain, 0.7926, 1.1053
+ARIMAX, Sweden, 0.3513, 0.4439
+ARIMAX, United Kingdom, 0.346, 0.6374
+ARIMAX, United States, 1.6873, 3.3758

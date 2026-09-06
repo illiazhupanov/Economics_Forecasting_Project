@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 sys.path.append(str(Path.cwd().parent))
+import json
 
 def generate_timesteps_list(first_year: int, last_year: int) -> list:
     '''
@@ -26,7 +27,7 @@ def generate_timesteps_list(first_year: int, last_year: int) -> list:
     return timestep_list
 
 
-def exog_coeffs_summary_CSV(exog_regressors_dict, filepath_cpi, filepath_rgdp):
+def exog_coeffs_summary_csv(exog_regressors_dict, filepath_cpi, filepath_rgdp):
     with open(filepath_cpi, 'w') as f:
         f.write(f'Country, Positive coefficients, Negative coefficients, Significant (5%)' + '\n')
     with open(filepath_rgdp, 'w') as f:
@@ -60,3 +61,13 @@ def exog_coeffs_summary_CSV(exog_regressors_dict, filepath_cpi, filepath_rgdp):
         with open(filepath_rgdp, 'a') as f:
             f.write(f'{key}, {rgdp_positive_coeffs}, {rgdp_negative_coeffs}, {rgdp_significant_pval}' + '\n')
 
+def produce_arimax_orders_csv(filepath):
+    with open('..\\models_saves\\arimax\\arimax_metadata.json', 'r') as f:
+        metadata = json.load(f)
+    countries = [country for country in metadata.keys()]    
+    with open(filepath, 'w') as f:
+        f.write(f'Country; ARIMAX order' + '\n')    
+    for country in countries:
+        curr_order = metadata[country][0]
+        with open(filepath, 'a') as f:
+            f.write(f'{country}; {curr_order}' + '\n')        

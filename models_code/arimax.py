@@ -116,7 +116,7 @@ class arimax:
             auto_ar, auto_diff, auto_ma = auto_model.order
             # selecting the ranges around the p, d, q chosen by auto arima
             ar_orders_list = list(range(max(auto_ar-2, 0), auto_ar + 3))
-            diff_orders_list = list(range(0, 2))
+            diff_orders_list = list(range(0, 2)) 
             ma_orders_list = list(range(max(auto_ma-2, 0), auto_ma + 3))
 
             orders = list(itertools.product(ar_orders_list, diff_orders_list, ma_orders_list))

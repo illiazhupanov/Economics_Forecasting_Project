@@ -129,7 +129,7 @@ def MAE(df):
     Returns:
         mae: a float scalar 
     '''
-    mae = round(float((df.iloc[:, -2] - df.iloc[:, -1]).abs().mean()), 4)
+    mae = round(float((df.iloc[:, -2].astype(float) - df.iloc[:, -1].astype(float)).abs().mean()), 4)
     return mae
 
 def RMSE(df):
@@ -143,10 +143,10 @@ def RMSE(df):
     Returns:
         rmse: a float scalar 
         '''
-    rmse = round(float(np.sqrt(np.mean((df.iloc[:, -2] - df.iloc[:, -1]) ** 2))), 4)
+    rmse = round(float(np.sqrt(np.mean((df.iloc[:, -2].astype(float) - df.iloc[:, -1].astype(float)) ** 2))), 4)
     return rmse
 
-def produce_errors_csv(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
+def produce_errors_across_countries_csv(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
     with open(filepath, 'w') as f:
         f.write(f'Model, MAE, RMSE' + '\n') 
     with open(filepath, 'a') as f:
@@ -154,3 +154,23 @@ def produce_errors_csv(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
         f.write(f'FFNN, {MAE(ffnn_df)}, {RMSE(ffnn_df)}' + '\n')
         f.write(f'RNN, {MAE(rnn_df)}, {RMSE(rnn_df)}' + '\n')
         f.write(f'ARIMAX, {MAE(arimax_df)}, {RMSE(arimax_df)}' + '\n')
+
+def produce_errors_per_country_csv(naive_df, ffnn_df, rnn_df, arimax_df, filepath):
+    with open(filepath, 'w') as f:
+        f.write(f'Model, Country, MAE, RMSE' + '\n') 
+    for country in naive_df.iloc[:, 0].unique():
+        curr_country_df = naive_df.loc[naive_df[naive_df.columns[0]] == country, :]
+        with open(filepath, 'a') as f:
+            f.write(f'Naive, {country}, {MAE(curr_country_df)}, {RMSE(curr_country_df)}' + '\n') 
+    for country in ffnn_df.iloc[:, 0].unique():
+        curr_country_df = ffnn_df.loc[ffnn_df[ffnn_df.columns[0]] == country, :]
+        with open(filepath, 'a') as f:
+            f.write(f'FFNN, {country}, {MAE(curr_country_df)}, {RMSE(curr_country_df)}' + '\n')
+    for country in rnn_df.iloc[:, 0].unique():
+        curr_country_df = rnn_df.loc[rnn_df[rnn_df.columns[0]] == country, :]
+        with open(filepath, 'a') as f:
+            f.write(f'RNN, {country}, {MAE(curr_country_df)}, {RMSE(curr_country_df)}' + '\n') 
+    for country in arimax_df.iloc[:, 0].unique():
+        curr_country_df = arimax_df.loc[arimax_df[arimax_df.columns[0]] == country, :]
+        with open(filepath, 'a') as f:
+            f.write(f'ARIMAX, {country}, {MAE(curr_country_df)}, {RMSE(curr_country_df)}' + '\n')    
