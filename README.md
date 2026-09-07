@@ -1,5 +1,5 @@
 ## Forecasting Unemployment Rate with Econometric Models and Neural Networks 
-# By Illia Zhupanov
+### By Illia Zhupanov
 
 
 This repository contains the code, data, and the resulting forecasts for my research paper, which compares the performance of ARIMAX against deep-learning neural networks (FFNN and RNN) in forecasting the unemployment rate in OECD economies, with a COVID-recession robustness test. The naive baseline is the no-change model.
